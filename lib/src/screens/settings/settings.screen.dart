@@ -19,14 +19,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
         title: Text('Settings'),
       ),
       drawer: AppDrawer(),
-      body: Container(
-        alignment: Alignment.topCenter,
-        margin: const EdgeInsets.all(30.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: <Widget>[],
+      body: SingleChildScrollView(
+        child: Container(
+          alignment: Alignment.topCenter,
+          margin: const EdgeInsets.all(30.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: <Widget>[],
+            ),
           ),
         ),
       ),

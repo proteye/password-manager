@@ -11,6 +11,8 @@ class NotesDetailScreen extends StatefulWidget {
 class _NotesDetailScreenState extends State<NotesDetailScreen> {
   NoteModel _note = NoteModel();
   String _title = 'New note';
+  final FocusNode _nameFocusNode = FocusNode();
+  final FocusNode _textFocusNode = FocusNode();
   bool _inited = false;
   bool _editMode = true;
   final _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -19,7 +21,9 @@ class _NotesDetailScreenState extends State<NotesDetailScreen> {
   _toggleEditMode() {
     setState(() {
       _editMode = !_editMode;
-      if (!_editMode) {
+      if (_editMode) {
+        _nameFocusNode.requestFocus();
+      } else {
         _formKey.currentState.reset();
       }
     });
@@ -70,7 +74,7 @@ class _NotesDetailScreenState extends State<NotesDetailScreen> {
               },
             ),
             FlatButton(
-              child: Text('Accept'),
+              child: Text('Delete'),
               onPressed: () {
                 Navigator.of(context).pop();
                 _delete();
@@ -104,81 +108,91 @@ class _NotesDetailScreenState extends State<NotesDetailScreen> {
       key: _scaffoldKey,
       appBar: AppBar(
         title: Text(_title),
-        actions: <Widget>[
-          FlatButton(
-            child: Text(_editMode ? 'Save' : 'Edit',
-                style: TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.bold)),
-            onPressed: _editMode ? _save : _toggleEditMode,
-          ),
-        ],
-        leading: _editMode
-            ? OverflowBox(
-                alignment: Alignment.centerLeft,
-                maxWidth: 90.0,
-                child: FlatButton(
-                  child: Text('Cancel',
-                      style: TextStyle(
-                          color: Colors.white, fontWeight: FontWeight.bold)),
-                  onPressed: _note.id != null ? _toggleEditMode : _cancel,
+        actions: _editMode
+            ? <Widget>[
+                IconButton(
+                  icon: Icon(Icons.save),
+                  onPressed: _save,
                 ),
+              ]
+            : null,
+        leading: _editMode
+            ? IconButton(
+                icon: Icon(Icons.cancel),
+                onPressed: _note.id != null ? _toggleEditMode : _cancel,
               )
             : null,
       ),
-      body: Container(
-        alignment: Alignment.topCenter,
-        margin: const EdgeInsets.all(30.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: <Widget>[
-              TextFormField(
-                key: Key('name'),
-                autocorrect: false,
-                autofocus: _editMode,
-                enabled: _editMode,
-                decoration: InputDecoration(
-                  labelText: 'Note name',
+      body: SingleChildScrollView(
+        child: Container(
+          alignment: Alignment.topCenter,
+          margin: const EdgeInsets.all(30.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: <Widget>[
+                TextFormField(
+                  key: Key('name'),
+                  autocorrect: false,
+                  autofocus: _editMode,
+                  enabled: _editMode,
+                  focusNode: _nameFocusNode,
+                  textInputAction: TextInputAction.next,
+                  decoration: InputDecoration(
+                    labelText: 'Note name',
+                  ),
+                  initialValue: _note.name,
+                  validator: (value) {
+                    if (value.isEmpty) {
+                      return 'Please enter name';
+                    }
+                  },
+                  onFieldSubmitted: (text) {
+                    _nameFocusNode.unfocus();
+                    FocusScope.of(context).requestFocus(_textFocusNode);
+                  },
+                  onSaved: (text) {
+                    _note.name = text;
+                  },
                 ),
-                initialValue: _note.name,
-                validator: (value) {
-                  if (value.isEmpty) {
-                    return 'Please enter name';
-                  }
-                },
-                onSaved: (text) {
-                  _note.name = text;
-                },
-              ),
-              SizedBox(height: 15.0),
-              TextFormField(
-                key: Key('text'),
-                autocorrect: false,
-                enabled: _editMode,
-                maxLines: 15,
-                decoration: InputDecoration(
-                  labelText: 'Text',
-                  alignLabelWithHint: true,
-                  border: OutlineInputBorder(),
+                SizedBox(height: 15.0),
+                TextFormField(
+                  key: Key('text'),
+                  autocorrect: true,
+                  enabled: _editMode,
+                  focusNode: _textFocusNode,
+                  maxLines: 15,
+                  textInputAction: TextInputAction.done,
+                  decoration: InputDecoration(
+                    labelText: 'Text',
+                    alignLabelWithHint: true,
+                    border: OutlineInputBorder(),
+                  ),
+                  initialValue: _note.text,
+                  onSaved: (text) {
+                    _note.text = text;
+                  },
                 ),
-                initialValue: _note.text,
-                onSaved: (text) {
-                  _note.text = text;
-                },
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
-      floatingActionButton: _note.id != null && !_editMode
+      floatingActionButton: _note.id != null && _editMode
           ? FloatingActionButton(
               onPressed: _showConfirmDialog,
-              tooltip: 'Delete a note',
+              tooltip: 'Delete a credential',
               backgroundColor: Colors.red,
               child: Icon(Icons.delete),
             )
-          : null,
+          : (_note.id != null && !_editMode
+              ? FloatingActionButton(
+                  onPressed: _toggleEditMode,
+                  tooltip: 'Edit a credential',
+                  child: Icon(Icons.edit),
+                )
+              : null),
     );
   }
 }

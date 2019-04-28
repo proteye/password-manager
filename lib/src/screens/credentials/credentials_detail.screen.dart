@@ -14,6 +14,7 @@ class CredentialsDetailScreen extends StatefulWidget {
 class _CredentialsDetailScreenState extends State<CredentialsDetailScreen> {
   CredentialModel _credential = CredentialModel();
   String _title = 'New credential';
+  FocusNode _nameFocusNode;
   bool _inited = false;
   bool _editMode = true;
   bool _passwordVisible = false;
@@ -23,7 +24,9 @@ class _CredentialsDetailScreenState extends State<CredentialsDetailScreen> {
   _toggleEditMode() {
     setState(() {
       _editMode = !_editMode;
-      if (!_editMode) {
+      if (_editMode) {
+        _nameFocusNode.requestFocus();
+      } else {
         _formKey.currentState.reset();
       }
     });
@@ -80,7 +83,7 @@ class _CredentialsDetailScreenState extends State<CredentialsDetailScreen> {
               },
             ),
             FlatButton(
-              child: Text('Accept'),
+              child: Text('Delete'),
               onPressed: () {
                 Navigator.of(context).pop();
                 _delete();
@@ -115,6 +118,18 @@ class _CredentialsDetailScreenState extends State<CredentialsDetailScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _nameFocusNode = FocusNode();
+  }
+
+  @override
+  void dispose() {
+    _nameFocusNode.dispose();
+    super.dispose();
+  }
+
+  @override
   void didChangeDependencies() {
     var arguments = ModalRoute.of(context).settings.arguments;
     if (!_inited && arguments != null) {
@@ -132,201 +147,207 @@ class _CredentialsDetailScreenState extends State<CredentialsDetailScreen> {
       key: _scaffoldKey,
       appBar: AppBar(
         title: Text(_title),
-        actions: <Widget>[
-          FlatButton(
-            child: Text(_editMode ? 'Save' : 'Edit',
-                style: TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.bold)),
-            onPressed: _editMode ? _save : _toggleEditMode,
-          ),
-        ],
-        leading: _editMode
-            ? OverflowBox(
-                alignment: Alignment.centerLeft,
-                maxWidth: 90.0,
-                child: FlatButton(
-                  child: Text('Cancel',
-                      style: TextStyle(
-                          color: Colors.white, fontWeight: FontWeight.bold)),
-                  onPressed: _credential.id != null ? _toggleEditMode : _cancel,
+        actions: _editMode
+            ? <Widget>[
+                IconButton(
+                  icon: Icon(Icons.save),
+                  onPressed: _save,
                 ),
+              ]
+            : null,
+        leading: _editMode
+            ? IconButton(
+                icon: Icon(Icons.cancel),
+                onPressed: _credential.id != null ? _toggleEditMode : _cancel,
               )
             : null,
       ),
-      body: Container(
-        alignment: Alignment.topCenter,
-        margin: const EdgeInsets.all(30.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: <Widget>[
-              TextFormField(
-                key: Key('name'),
-                autocorrect: false,
-                autofocus: _editMode,
-                enabled: _editMode,
-                decoration: InputDecoration(
-                  labelText: 'Service name',
+      body: SingleChildScrollView(
+        child: Container(
+          alignment: Alignment.topCenter,
+          margin: const EdgeInsets.all(30.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: <Widget>[
+                TextFormField(
+                  key: Key('name'),
+                  autocorrect: false,
+                  autofocus: _editMode,
+                  enabled: _editMode,
+                  focusNode: _nameFocusNode,
+                  decoration: InputDecoration(
+                    labelText: 'Service name',
+                  ),
+                  initialValue: _credential.name,
+                  validator: (value) {
+                    if (value.isEmpty && _credential.url.isEmpty) {
+                      return 'Please enter name';
+                    }
+                  },
+                  onSaved: (text) {
+                    _credential.name = text;
+                  },
                 ),
-                initialValue: _credential.name,
-                validator: (value) {
-                  if (value.isEmpty && _credential.url.isEmpty) {
-                    return 'Please enter name';
-                  }
-                },
-                onSaved: (text) {
-                  _credential.name = text;
-                },
-              ),
-              SizedBox(height: 15.0),
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: TextFormField(
-                      key: Key('url'),
-                      autocorrect: false,
-                      enabled: _editMode,
-                      decoration: InputDecoration(
-                        labelText: 'Service URL',
+                SizedBox(height: 15.0),
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: TextFormField(
+                        key: Key('url'),
+                        autocorrect: false,
+                        enabled: _editMode,
+                        keyboardType: TextInputType.url,
+                        decoration: InputDecoration(
+                          labelText: 'Service URL',
+                        ),
+                        initialValue: _credential.url,
+                        validator: (value) {
+                          if (value.isEmpty && _credential.name.isEmpty) {
+                            return 'Please enter url';
+                          }
+                        },
+                        onSaved: (text) {
+                          _credential.url = text;
+                        },
                       ),
-                      initialValue: _credential.url,
-                      validator: (value) {
-                        if (value.isEmpty && _credential.name.isEmpty) {
-                          return 'Please enter url';
-                        }
-                      },
-                      onSaved: (text) {
-                        _credential.url = text;
-                      },
                     ),
-                  ),
-                  !_editMode
-                      ? IconButton(
-                          icon: Icon(
-                            Icons.open_in_browser,
-                            color: Theme.of(context).primaryColorDark,
-                          ),
-                          onPressed: () {
-                            _launchUrl(_credential.url);
-                          },
-                        )
-                      : Container(),
-                ],
-              ),
-              SizedBox(height: 15.0),
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: TextFormField(
-                      key: Key('username'),
-                      autocorrect: false,
-                      enabled: _editMode,
-                      decoration: InputDecoration(
-                        labelText: 'Username',
-                      ),
-                      initialValue: _credential.username,
-                      onSaved: (text) {
-                        _credential.username = text;
-                      },
-                    ),
-                  ),
-                  !_editMode
-                      ? IconButton(
-                          icon: Icon(
-                            Icons.content_copy,
-                            color: Theme.of(context).primaryColorDark,
-                          ),
-                          onPressed: () {
-                            _copyToClipboard(_credential.username, 'Username');
-                          },
-                        )
-                      : Container(),
-                ],
-              ),
-              SizedBox(height: 15.0),
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: TextFormField(
-                      key: Key('password'),
-                      autocorrect: false,
-                      obscureText: !_passwordVisible,
-                      enabled: _editMode,
-                      decoration: InputDecoration(
-                        labelText: 'Password',
-                        suffixIcon: _editMode
-                            ? IconButton(
-                                icon: Icon(
-                                  _passwordVisible
-                                      ? Icons.visibility
-                                      : Icons.visibility_off,
-                                  color: Colors.grey,
-                                ),
-                                onPressed: _togglePasswordVisible,
-                              )
-                            : null,
-                      ),
-                      initialValue: _credential.password,
-                      validator: (value) {
-                        if (value.isEmpty) {
-                          return 'Please enter password';
-                        }
-                      },
-                      onSaved: (text) {
-                        _credential.password = text;
-                      },
-                    ),
-                  ),
-                  !_editMode
-                      ? IconButton(
-                          icon: Icon(
-                            _passwordVisible
-                                ? Icons.visibility
-                                : Icons.visibility_off,
-                            color: Colors.grey,
-                          ),
-                          onPressed: _togglePasswordVisible,
-                        )
-                      : Container(),
-                  !_editMode
-                      ? IconButton(
-                          icon: Icon(
-                            Icons.content_copy,
-                            color: Theme.of(context).primaryColorDark,
-                          ),
-                          onPressed: () {
-                            _copyToClipboard(_credential.password, 'Password');
-                          },
-                        )
-                      : Container(),
-                ],
-              ),
-              SizedBox(height: 15.0),
-              TextFormField(
-                key: Key('comment'),
-                autocorrect: false,
-                enabled: _editMode,
-                decoration: InputDecoration(
-                  labelText: 'Comment',
+                    !_editMode
+                        ? IconButton(
+                            icon: Icon(
+                              Icons.open_in_browser,
+                              color: Theme.of(context).primaryColorDark,
+                            ),
+                            onPressed: () {
+                              _launchUrl(_credential.url);
+                            },
+                          )
+                        : Container(),
+                  ],
                 ),
-                initialValue: _credential.comment,
-                onSaved: (text) {
-                  _credential.comment = text;
-                },
-              ),
-            ],
+                SizedBox(height: 15.0),
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: TextFormField(
+                        key: Key('username'),
+                        autocorrect: false,
+                        enabled: _editMode,
+                        decoration: InputDecoration(
+                          labelText: 'Username',
+                        ),
+                        initialValue: _credential.username,
+                        onSaved: (text) {
+                          _credential.username = text;
+                        },
+                      ),
+                    ),
+                    !_editMode
+                        ? IconButton(
+                            icon: Icon(
+                              Icons.content_copy,
+                              color: Theme.of(context).primaryColorDark,
+                            ),
+                            onPressed: () {
+                              _copyToClipboard(
+                                  _credential.username, 'Username');
+                            },
+                          )
+                        : Container(),
+                  ],
+                ),
+                SizedBox(height: 15.0),
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: TextFormField(
+                        key: Key('password'),
+                        autocorrect: false,
+                        obscureText: !_passwordVisible,
+                        enabled: _editMode,
+                        decoration: InputDecoration(
+                          labelText: 'Password',
+                          suffixIcon: _editMode
+                              ? IconButton(
+                                  icon: Icon(
+                                    _passwordVisible
+                                        ? Icons.visibility
+                                        : Icons.visibility_off,
+                                    color: Colors.grey,
+                                  ),
+                                  onPressed: _togglePasswordVisible,
+                                )
+                              : null,
+                        ),
+                        initialValue: _credential.password,
+                        validator: (value) {
+                          if (value.isEmpty) {
+                            return 'Please enter password';
+                          }
+                        },
+                        onSaved: (text) {
+                          _credential.password = text;
+                        },
+                      ),
+                    ),
+                    !_editMode
+                        ? IconButton(
+                            icon: Icon(
+                              _passwordVisible
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                              color: Colors.grey,
+                            ),
+                            onPressed: _togglePasswordVisible,
+                          )
+                        : Container(),
+                    !_editMode
+                        ? IconButton(
+                            icon: Icon(
+                              Icons.content_copy,
+                              color: Theme.of(context).primaryColorDark,
+                            ),
+                            onPressed: () {
+                              _copyToClipboard(
+                                  _credential.password, 'Password');
+                            },
+                          )
+                        : Container(),
+                  ],
+                ),
+                SizedBox(height: 15.0),
+                TextFormField(
+                  key: Key('comment'),
+                  autocorrect: true,
+                  enabled: _editMode,
+                  decoration: InputDecoration(
+                    labelText: 'Comment',
+                  ),
+                  initialValue: _credential.comment,
+                  onSaved: (text) {
+                    _credential.comment = text;
+                  },
+                ),
+              ],
+            ),
           ),
         ),
       ),
-      floatingActionButton: _credential.id != null && !_editMode
+      floatingActionButton: _credential.id != null && _editMode
           ? FloatingActionButton(
               onPressed: _showConfirmDialog,
               tooltip: 'Delete a credential',
               backgroundColor: Colors.red,
               child: Icon(Icons.delete),
             )
-          : null,
+          : (_credential.id != null && !_editMode
+              ? FloatingActionButton(
+                  onPressed: _toggleEditMode,
+                  tooltip: 'Edit a credential',
+                  child: Icon(Icons.edit),
+                )
+              : null),
     );
   }
 }
