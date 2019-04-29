@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:synchronized/synchronized.dart';
 import 'package:sqflite/sqflite.dart';
 import "package:path/path.dart" show join;
 
+import 'package:password_manager/src/utils/crypt.util.dart';
 import 'package:password_manager/src/config.dart';
 
 const VERSION = 1;
@@ -56,6 +58,11 @@ class DbHelper {
     return join(dirPath, _dbName + '.db');
   }
 
+  Future<String> get encryptDbPath async {
+    String dirPath = await getDatabasesPath();
+    return join(dirPath, _dbName + '.db.encrypt');
+  }
+
   Future<Database> get database async {
     if (_dbase == null) {
       await _lock.synchronized(() async {
@@ -89,6 +96,39 @@ class DbHelper {
       print('Database deleting error: $e');
       return false;
     }
+    return true;
+  }
+
+  Future<bool> encryptDb(password) async {
+    String dbPath = await this.dbPath;
+    String encryptDbPath = await this.encryptDbPath;
+    var dbFile = File(dbPath);
+    var encryptDbFile = File(encryptDbPath);
+    var dataBytes = dbFile.readAsBytesSync();
+    var encrypted;
+    try {
+      encrypted = CryptHelper.encryptBytes(password, dataBytes);
+    } catch (e) {
+      return false;
+    }
+    encryptDbFile.writeAsBytesSync(encrypted);
+    // dbFile.deleteSync();
+    return true;
+  }
+
+  Future<bool> decryptDb(password) async {
+    String encryptDbPath = await this.encryptDbPath;
+    String dbPath = await this.dbPath;
+    var encryptDbFile = File(encryptDbPath);
+    var dbFile = File(dbPath);
+    var dataBytes = encryptDbFile.readAsBytesSync();
+    var decrypted;
+    try {
+      decrypted = CryptHelper.decryptBytes(password, dataBytes);
+    } catch (e) {
+      return false;
+    }
+    dbFile.writeAsBytesSync(decrypted);
     return true;
   }
 }

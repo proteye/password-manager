@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
-import 'package:password_manager/src/models/setting.model.dart';
+import 'package:password_manager/src/utils/db.util.dart';
+
+DbHelper dbHelper = new DbHelper();
 
 class MasterPasswordScreen extends StatefulWidget {
   @override
@@ -10,12 +12,14 @@ class MasterPasswordScreen extends StatefulWidget {
 class _MasterPasswordScreenState extends State<MasterPasswordScreen> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   final _formKey = GlobalKey<FormState>();
-  String _current = '';
-  String _new = '';
-  String _confirm = '';
+  String _currentPassword = '';
+  String _newPassword = '';
+  bool _currentValid = true;
   bool _accept = false;
 
-  _save() {
+  _save() async {
+    _currentValid = true;
+    // Save and validate the form
     _formKey.currentState.save();
     if (!_formKey.currentState.validate()) {
       _scaffoldKey.currentState.hideCurrentSnackBar();
@@ -23,7 +27,18 @@ class _MasterPasswordScreenState extends State<MasterPasswordScreen> {
           SnackBar(content: Text('Please, fill in all required fields')));
       return;
     }
-    // TODO - change master password
+    // Check current password
+    _currentValid = await dbHelper.decryptDb(_currentPassword);
+    if (!_currentValid) {
+      _formKey.currentState.validate();
+      _scaffoldKey.currentState.hideCurrentSnackBar();
+      _scaffoldKey.currentState
+          .showSnackBar(SnackBar(content: Text('Current password failed')));
+      return;
+    }
+    // Encrypt the database with AES-256
+    dbHelper.encryptDb(_newPassword);
+    Navigator.pop(context);
   }
 
   @override
@@ -55,9 +70,12 @@ class _MasterPasswordScreenState extends State<MasterPasswordScreen> {
                     if (value.isEmpty) {
                       return 'Please enter current password';
                     }
+                    if (!_currentValid) {
+                      return 'Please enter a valid password';
+                    }
                   },
                   onSaved: (text) {
-                    _current = text;
+                    _currentPassword = text;
                   },
                 ),
                 TextFormField(
@@ -74,7 +92,7 @@ class _MasterPasswordScreenState extends State<MasterPasswordScreen> {
                     }
                   },
                   onSaved: (text) {
-                    _new = text;
+                    _newPassword = text;
                   },
                 ),
                 TextFormField(
@@ -89,9 +107,9 @@ class _MasterPasswordScreenState extends State<MasterPasswordScreen> {
                     if (value.isEmpty) {
                       return 'Please confirm password';
                     }
-                  },
-                  onSaved: (text) {
-                    _confirm = text;
+                    if (value != _newPassword) {
+                      return 'Confirm password do not match';
+                    }
                   },
                 ),
                 SizedBox(height: 15.0),

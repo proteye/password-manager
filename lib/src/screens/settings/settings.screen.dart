@@ -57,6 +57,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   _changeMasterPassword() {
+    _toggleEditMode();
     Navigator.pushNamed(context, '/masterPassword');
   }
 
