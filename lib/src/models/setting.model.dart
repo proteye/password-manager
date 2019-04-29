@@ -91,6 +91,15 @@ class SettingProvider {
     );
   }
 
+  Future updateAll(List<SettingModel> settings, {callback}) async {
+    settings.forEach((setting) async {
+      await this.insert(setting);
+      if (settings.last.name == setting.name && callback != null) {
+        callback();
+      }
+    });
+  }
+
   Future<int> delete(String name) async {
     final db = await dbHelper.database;
     return await db.delete(

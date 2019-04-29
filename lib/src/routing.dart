@@ -8,6 +8,7 @@ import 'package:password_manager/src/screens/notes/notes_list.screen.dart';
 import 'package:password_manager/src/screens/notes/notes_detail.screen.dart';
 import 'package:password_manager/src/screens/password_generator/password_generator.screen.dart';
 import 'package:password_manager/src/screens/settings/settings.screen.dart';
+import 'package:password_manager/src/screens/settings/master_password.screen.dart';
 
 class Routing {
   static routes() {
@@ -20,6 +21,7 @@ class Routing {
       '/notesDetail': (context) => new NotesDetailScreen(),
       '/passwordGenerator': (context) => new PasswordGeneratorScreen(),
       '/settings': (context) => new SettingsScreen(),
+      '/masterPassword': (context) => new MasterPasswordScreen(),
     };
   }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
 
 import 'package:password_manager/src/drawer.dart';
@@ -185,17 +186,15 @@ class _PasswordGeneratorScreenState extends State<PasswordGeneratorScreen> {
                 ],
               ),
               SizedBox(height: 15.0),
-              OutlineButton(
-                padding: EdgeInsets.all(15.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: <Widget>[
-                    Icon(Icons.content_copy),
-                    Text('Copy to clipboard', style: TextStyle(fontSize: 16.0)),
-                  ],
+              SizedBox(
+                width: double.infinity,
+                child: OutlineButton.icon(
+                  padding: EdgeInsets.all(15.0),
+                  label: Text('Copy to clipboard',
+                      style: TextStyle(fontSize: 16.0)),
+                  icon: Icon(Icons.content_copy),
+                  onPressed: _copyToClipboard,
                 ),
-                onPressed: _copyToClipboard,
               ),
             ],
           ),
