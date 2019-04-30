@@ -77,4 +77,9 @@ class SettingsProvider {
     settings.dateUpdate = dateNow;
     return await prefs.setString(prefKey, settings.toString());
   }
+
+  Future<bool> clearSettings() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return await prefs.remove(prefKey);
+  }
 }

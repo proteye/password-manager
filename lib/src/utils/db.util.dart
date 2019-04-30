@@ -80,18 +80,30 @@ class DbHelper {
     return _dbase;
   }
 
-  Future<dynamic> close() {
+  Future<dynamic> close() async {
     if (_dbase == null) {
       return null;
     }
-    return _dbase.close();
+    var result = await _dbase.close();
+    _dbase = null;
+    return result;
+  }
+
+  Future<bool> existsDb() async {
+    String encryptDbPath = await this.encryptDbPath;
+    var encryptDbFile = File(encryptDbPath);
+    bool exists = encryptDbFile.existsSync();
+    return exists;
   }
 
   Future<bool> deleteDb() async {
     try {
       await this.close();
       String dbPath = await this.dbPath;
+      String encryptDbPath = await this.encryptDbPath;
+      var encryptDbFile = File(encryptDbPath);
       await deleteDatabase(dbPath);
+      encryptDbFile.deleteSync();
     } catch (e) {
       print('Database deleting error: $e');
       return false;
@@ -100,16 +112,16 @@ class DbHelper {
   }
 
   Future<bool> encryptDb(password) async {
+    this.close();
     String dbPath = await this.dbPath;
     String encryptDbPath = await this.encryptDbPath;
     var dbFile = File(dbPath);
     var encryptDbFile = File(encryptDbPath);
-    var dataBytes;
-    try {
-      dataBytes = dbFile.readAsBytesSync();
-    } catch (e) {
+    bool exists = dbFile.existsSync();
+    if (!exists) {
       return false;
     }
+    var dataBytes = dbFile.readAsBytesSync();
     var encrypted;
     try {
       encrypted = CryptHelper.encryptBytes(password, dataBytes);
@@ -122,16 +134,16 @@ class DbHelper {
   }
 
   Future<bool> decryptDb(password) async {
+    this.close();
     String encryptDbPath = await this.encryptDbPath;
     String dbPath = await this.dbPath;
     var encryptDbFile = File(encryptDbPath);
     var dbFile = File(dbPath);
-    var dataBytes;
-    try {
-      dataBytes = encryptDbFile.readAsBytesSync();
-    } catch (e) {
+    bool exists = encryptDbFile.existsSync();
+    if (!exists) {
       return false;
     }
+    var dataBytes = encryptDbFile.readAsBytesSync();
     var decrypted;
     try {
       decrypted = CryptHelper.decryptBytes(password, dataBytes);

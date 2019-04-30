@@ -3,6 +3,7 @@ import 'package:local_auth/local_auth.dart';
 
 import 'package:password_manager/src/drawer.dart';
 import 'package:password_manager/src/models/setting.model.dart';
+import 'package:password_manager/src/utils/db.util.dart';
 
 class SettingsScreen extends StatefulWidget {
   @override
@@ -36,6 +37,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   _changeMasterPassword() {
     Navigator.pushNamed(context, '/masterPassword');
+  }
+
+  _deleteDatabase() async {
+    DbHelper dbHelper = DbHelper();
+    await dbHelper.deleteDb();
+    await _settingsProvider.clearSettings();
+    Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
   }
 
   _showPinDialog() {
@@ -83,6 +91,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 if (_save()) {
                   Navigator.of(context).pop();
                 }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  _showConfirmDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Delete database'),
+          content: Text(
+              'Are you sure you want to remove the database with all passwords?'),
+          actions: <Widget>[
+            FlatButton(
+              child: Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            FlatButton(
+              child: Text('Delete'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _deleteDatabase();
               },
             ),
           ],
@@ -189,6 +225,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               _save();
                             }
                           : null,
+                    ),
+                    Divider(),
+                    SizedBox(
+                      width: double.infinity,
+                      child: RaisedButton.icon(
+                        color: Colors.red,
+                        textColor: Colors.white,
+                        label: Text('Remove database and exit'),
+                        icon: Icon(Icons.delete),
+                        onPressed: _showConfirmDialog,
+                      ),
                     ),
                   ],
                 ),
