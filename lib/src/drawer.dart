@@ -56,10 +56,14 @@ class AppDrawer extends StatelessWidget {
           }
 
           var item = _items[index - 1];
+          var isLast = index == _items.length;
           return ListTile(
-            title: Text(item['title']),
-            trailing: Icon(Icons.arrow_right),
-            leading: Icon(item['icon']),
+            title: Text(
+              item['title'],
+              style: TextStyle(color: isLast ? Colors.red : null),
+            ),
+            trailing: !isLast ? Icon(Icons.arrow_right) : null,
+            leading: Icon(item['icon'], color: isLast ? Colors.red : null),
             onTap: () {
               Navigator.pushNamedAndRemoveUntil(
                   context, item['path'], (route) => false);

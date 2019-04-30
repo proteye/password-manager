@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:password_manager/src/models/setting.model.dart';
 import 'package:password_manager/src/utils/db.util.dart';
 
 DbHelper dbHelper = new DbHelper();
@@ -12,6 +13,8 @@ class MasterPasswordScreen extends StatefulWidget {
 class _MasterPasswordScreenState extends State<MasterPasswordScreen> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   final _formKey = GlobalKey<FormState>();
+  final _settingsProvider = SettingsProvider();
+  SettingsModel _settings = SettingsModel();
   String _currentPassword = '';
   String _newPassword = '';
   bool _currentValid = true;
@@ -38,7 +41,21 @@ class _MasterPasswordScreenState extends State<MasterPasswordScreen> {
     }
     // Encrypt the database with AES-256
     dbHelper.encryptDb(_newPassword);
+    // Store new password
+    _settings.masterPassword = _newPassword;
+    await _settingsProvider.setSettings(_settings);
     Navigator.pop(context);
+  }
+
+  Future<SettingsModel> _fetchSettings() async {
+    _settings = await _settingsProvider.getSettings();
+    return _settings;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchSettings();
   }
 
   @override

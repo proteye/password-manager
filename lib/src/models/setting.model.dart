@@ -6,6 +6,7 @@ final String prefKey = 'settings';
 class SettingsModel {
   String pin = '';
   bool fingerprint = false;
+  String masterPassword = '';
   int dateCreate;
   int dateUpdate;
 
@@ -13,6 +14,7 @@ class SettingsModel {
     var map = <String, dynamic>{
       'pin': pin,
       'fingerprint': fingerprint,
+      'masterPassword': masterPassword,
       'dateCreate': dateCreate,
       'dateUpdate': dateUpdate,
     };
@@ -25,6 +27,7 @@ class SettingsModel {
   SettingsModel.fromMap(Map<String, dynamic> map) {
     pin = map['pin'];
     fingerprint = map['fingerprint'];
+    masterPassword = map['masterPassword'];
     dateCreate = map['dateCreate'];
     dateUpdate = map['dateUpdate'];
   }
@@ -33,6 +36,7 @@ class SettingsModel {
     var map = json.decode(jsonString);
     pin = map['pin'] ?? '';
     fingerprint = map['fingerprint'] ? true : false;
+    masterPassword = map['masterPassword'] ?? '';
     dateCreate = map['dateCreate'];
     dateUpdate = map['dateUpdate'];
   }
@@ -41,6 +45,7 @@ class SettingsModel {
     return {
       'pin': pin,
       'fingerprint': fingerprint,
+      'masterPassword': masterPassword,
       'dateCreate': dateCreate,
       'dateUpdate': dateUpdate,
     };

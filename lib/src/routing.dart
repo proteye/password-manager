@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:password_manager/src/screens/auth/login.screen.dart';
 import 'package:password_manager/src/screens/credentials/credentials_list.screen.dart';
 import 'package:password_manager/src/screens/credentials/credentials_detail.screen.dart';
 import 'package:password_manager/src/screens/cards/cards_list.screen.dart';
@@ -13,7 +14,8 @@ import 'package:password_manager/src/screens/settings/master_password.screen.dar
 class Routing {
   static routes() {
     return {
-      '/': (context) => new CredentialsListScreen(),
+      '/': (context) => new LoginScreen(),
+      '/credentials': (context) => new CredentialsListScreen(),
       '/credentialsDetail': (context) => new CredentialsDetailScreen(),
       '/cards': (context) => new CardsListScreen(),
       '/cardsDetail': (context) => new CardsDetailScreen(),
@@ -29,7 +31,7 @@ class Routing {
     return [
       {
         'title': 'Credentials',
-        'path': '/',
+        'path': '/credentials',
         'icon': Icons.vpn_key,
       },
       {
@@ -51,6 +53,11 @@ class Routing {
         'title': 'Settings',
         'path': '/settings',
         'icon': Icons.settings,
+      },
+      {
+        'title': 'Lock app',
+        'path': '/',
+        'icon': Icons.lock,
       },
     ];
   }

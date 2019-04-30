@@ -104,7 +104,12 @@ class DbHelper {
     String encryptDbPath = await this.encryptDbPath;
     var dbFile = File(dbPath);
     var encryptDbFile = File(encryptDbPath);
-    var dataBytes = dbFile.readAsBytesSync();
+    var dataBytes;
+    try {
+      dataBytes = dbFile.readAsBytesSync();
+    } catch (e) {
+      return false;
+    }
     var encrypted;
     try {
       encrypted = CryptHelper.encryptBytes(password, dataBytes);
@@ -121,7 +126,12 @@ class DbHelper {
     String dbPath = await this.dbPath;
     var encryptDbFile = File(encryptDbPath);
     var dbFile = File(dbPath);
-    var dataBytes = encryptDbFile.readAsBytesSync();
+    var dataBytes;
+    try {
+      dataBytes = encryptDbFile.readAsBytesSync();
+    } catch (e) {
+      return false;
+    }
     var decrypted;
     try {
       decrypted = CryptHelper.decryptBytes(password, dataBytes);
