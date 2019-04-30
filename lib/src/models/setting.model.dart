@@ -1,22 +1,18 @@
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:password_manager/src/utils/db.util.dart';
+final String prefKey = 'settings';
 
-DbHelper dbHelper = new DbHelper();
-
-final String tableName = 'Setting';
-final int defaultLimit = 100;
-
-class SettingModel {
-  String name;
-  String value;
+class SettingsModel {
+  String pin = '';
+  bool fingerprint = false;
   int dateCreate;
   int dateUpdate;
 
   Map<String, dynamic> toMap() {
     var map = <String, dynamic>{
-      'name': name,
-      'value': value,
+      'pin': pin,
+      'fingerprint': fingerprint,
       'dateCreate': dateCreate,
       'dateUpdate': dateUpdate,
     };
@@ -24,19 +20,27 @@ class SettingModel {
     return map;
   }
 
-  SettingModel();
+  SettingsModel();
 
-  SettingModel.fromMap(Map<String, dynamic> map) {
-    name = map['name'];
-    value = map['value'];
+  SettingsModel.fromMap(Map<String, dynamic> map) {
+    pin = map['pin'];
+    fingerprint = map['fingerprint'];
+    dateCreate = map['dateCreate'];
+    dateUpdate = map['dateUpdate'];
+  }
+
+  SettingsModel.fromJson(String jsonString) {
+    var map = json.decode(jsonString);
+    pin = map['pin'] ?? '';
+    fingerprint = map['fingerprint'] ? true : false;
     dateCreate = map['dateCreate'];
     dateUpdate = map['dateUpdate'];
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'name': name,
-      'value': value,
+      'pin': pin,
+      'fingerprint': fingerprint,
       'dateCreate': dateCreate,
       'dateUpdate': dateUpdate,
     };
@@ -48,64 +52,24 @@ class SettingModel {
   }
 }
 
-class SettingProvider {
-  Future<List<SettingModel>> getList({int limit, int offset}) async {
-    final db = await dbHelper.database;
-    var res = await db.query(
-      tableName,
-      limit: limit ?? defaultLimit,
-      offset: offset ?? 0,
-    );
-    return res.isNotEmpty
-        ? res.map((item) => SettingModel.fromMap(item)).toList()
-        : [];
-  }
-
-  Future<SettingModel> getOne(String name) async {
-    final db = await dbHelper.database;
-    var res = await db.query(
-      tableName,
-      where: 'name = ?',
-      whereArgs: [name],
-    );
-    return res.isNotEmpty ? SettingModel.fromMap(res.first) : Null;
-  }
-
-  Future<SettingModel> insert(SettingModel setting) async {
-    final db = await dbHelper.database;
-    try {
-      await db.insert(tableName, setting.toMap());
-    } catch (e) {
-      await this.update(setting);
+class SettingsProvider {
+  Future<SettingsModel> getSettings() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    SettingsModel settings = SettingsModel();
+    String settingsJson = prefs.getString(prefKey) ?? null;
+    if (settingsJson != null) {
+      settings = SettingsModel.fromJson(settingsJson);
     }
-    return setting;
+    return settings;
   }
 
-  Future<int> update(SettingModel setting) async {
-    final db = await dbHelper.database;
-    return await db.update(
-      tableName,
-      setting.toMap(),
-      where: 'name = ?',
-      whereArgs: [setting.name],
-    );
-  }
-
-  Future updateAll(List<SettingModel> settings, {callback}) async {
-    settings.forEach((setting) async {
-      await this.insert(setting);
-      if (settings.last.name == setting.name && callback != null) {
-        callback();
-      }
-    });
-  }
-
-  Future<int> delete(String name) async {
-    final db = await dbHelper.database;
-    return await db.delete(
-      tableName,
-      where: 'name = ?',
-      whereArgs: [name],
-    );
+  Future<bool> setSettings(SettingsModel settings) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var dateNow = new DateTime.now().toUtc().millisecondsSinceEpoch;
+    if (settings.dateCreate == null) {
+      settings.dateCreate = dateNow;
+    }
+    settings.dateUpdate = dateNow;
+    return await prefs.setString(prefKey, settings.toString());
   }
 }
