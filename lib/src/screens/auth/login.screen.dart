@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:local_auth/local_auth.dart';
 
 import 'package:password_manager/src/models/setting.model.dart';
 import 'package:password_manager/src/utils/db.util.dart';
 import 'package:password_manager/src/widgets/logo.widget.dart';
+
+const NUM_PAD = [
+  [1, 2, 3],
+  [4, 5, 6],
+  [7, 8, 9],
+  ['x', 0, 'c'],
+];
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -18,6 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
   SettingsModel _settings = SettingsModel();
   DbHelper _dbHelper = DbHelper();
   String _pin = '';
+  List<String> _pinList = ['x', 'x', 'x', 'x'];
   String _password = '';
   bool _isFirstStart = false;
   bool _error = false;
@@ -62,6 +71,30 @@ class _LoginScreenState extends State<LoginScreen> {
         _inProgress = false;
       });
     }
+  }
+
+  _changePin(code) {
+    return () {
+      if (code == 'x') {
+        return;
+      } else if (code == 'c') {
+        _pin = _pin.length > 0 ? _pin.substring(0, _pin.length - 1) : _pin;
+        _updatePinList();
+        return;
+      } else if (_pin.length == 4) {
+        return;
+      }
+      _pin += code.toString();
+      _updatePinList();
+    };
+  }
+
+  _updatePinList() {
+    _pinList = ['x', 'x', 'x', 'x'];
+    setState(() {
+      _pinList.setAll(0, _pin.split(''));
+      _error = false;
+    });
   }
 
   _create() async {
@@ -153,32 +186,67 @@ class _LoginScreenState extends State<LoginScreen> {
     return _settings;
   }
 
-  _renderTextField() {
-    if (_settings.pin.isNotEmpty) {
-      return TextFormField(
-        key: Key('pin'),
-        autocorrect: false,
-        autofocus: false,
-        obscureText: true,
-        maxLength: 4,
-        keyboardType: TextInputType.number,
-        decoration: InputDecoration(
-          labelText: 'PIN code',
+  _renderPinField() {
+    var dotColor = _error ? Colors.red : Colors.blue;
+    return Container(
+      margin: EdgeInsets.only(top: 15.0),
+      child: Column(children: <Widget>[
+        SizedBox(height: 15.0),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 50.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: _pinList.map((n) {
+              return Container(
+                padding: EdgeInsets.all(6.0),
+                decoration: BoxDecoration(
+                  color: n != 'x' ? dotColor : Colors.grey,
+                  borderRadius: BorderRadius.all(Radius.circular(6.0)),
+                  boxShadow: n != 'x'
+                      ? [BoxShadow(color: dotColor, blurRadius: 6.0)]
+                      : null,
+                ),
+              );
+            }).toList(),
+          ),
         ),
-        validator: (value) {
-          if (value.isEmpty || value.length < 4) {
-            return 'Please enter the code';
-          }
-          if (_error) {
-            return 'PIN code is invalid';
-          }
-        },
-        onSaved: (text) {
-          _pin = text;
-        },
-      );
-    }
+        SizedBox(height: 30.0),
+        Column(
+          children: NUM_PAD.map((row) {
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: row.map((col) {
+                Widget child = Text(
+                  col.toString(),
+                  style: TextStyle(fontSize: 24.0),
+                );
+                if (col == 'x') {
+                  child = Text(
+                    'EXIT',
+                    style: TextStyle(fontSize: 16.0),
+                  );
+                } else if (col == 'c') {
+                  child = Icon(Icons.backspace);
+                }
+                return Expanded(
+                  child: InkWell(
+                    child: Container(
+                      alignment: Alignment.center,
+                      padding: EdgeInsets.symmetric(vertical: 12.0),
+                      child: child,
+                    ),
+                    onTap: _changePin(col),
+                  ),
+                );
+              }).toList(),
+            );
+          }).toList(),
+        ),
+      ]),
+    );
+  }
 
+  _renderPasswordField() {
     return TextFormField(
       key: Key('password'),
       autocorrect: false,
@@ -306,7 +374,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   key: _formKey,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: <Widget>[
                       LogoWidget(
                         textColor1: Colors.black87,
@@ -315,11 +383,18 @@ class _LoginScreenState extends State<LoginScreen> {
                       SizedBox(height: 30.0),
                       Text(
                         _settings.pin.isEmpty
-                            ? 'Please login with your master password'
-                            : 'Please login with your PIN code',
-                        style: TextStyle(color: Colors.grey),
+                            ? 'Please enter your master password'
+                            : (!_error
+                                ? 'Please enter your PIN code'
+                                : 'PIN code is invalid'),
+                        style: TextStyle(
+                            color: _settings.pin.isNotEmpty && _error
+                                ? Colors.red
+                                : Colors.grey),
                       ),
-                      _renderTextField(),
+                      _settings.pin.isEmpty
+                          ? _renderPasswordField()
+                          : _renderPinField(),
                       SizedBox(height: 15.0),
                       SizedBox(
                         width: double.infinity,
