@@ -33,7 +33,6 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _inProgress = false;
 
   init() async {
-    await _dbHelper.close();
     bool exists = await _dbHelper.existsDb();
     // First app run
     if (!exists) {
@@ -41,6 +40,9 @@ class _LoginScreenState extends State<LoginScreen> {
         _isFirstStart = true;
       });
       return;
+    } else {
+      await _fetchSettings();
+      await _dbHelper.encryptDb(_settings.masterPassword);
     }
     // Next app run
     await initFingerprint();

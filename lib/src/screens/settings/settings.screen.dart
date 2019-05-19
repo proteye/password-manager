@@ -141,7 +141,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     List<BiometricType> availableBiometrics =
         await _localAuth.getAvailableBiometrics();
     if (availableBiometrics.contains(BiometricType.fingerprint)) {
-      _fingerprintEnabled = true;
+      setState(() {
+        _fingerprintEnabled = true;
+      });
     }
     // bool didAuthenticate = await _localAuth.authenticateWithBiometrics(
     //     localizedReason: 'Please authenticate to show account balance');

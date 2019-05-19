@@ -129,7 +129,7 @@ class DbHelper {
       return false;
     }
     encryptDbFile.writeAsBytesSync(encrypted);
-    // dbFile.deleteSync();
+    await deleteDatabase(dbPath);
     return true;
   }
 
